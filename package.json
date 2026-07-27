@@ -1,0 +1,20 @@
+{
+  "name": "aetherweir",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AETHERWEIR - an original 2D exploration-action platformer built from scratch with zero runtime dependencies.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test": "node --test \"tests/*.test.js\"",
+    "test:watch": "node --test --watch \"tests/*.test.js\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "validate": "node tools/validate-content.mjs",
+    "smoke": "node tools/smoke.mjs"
+  },
+  "devDependencies": {},
+  "license": "MIT"
+}
