@@ -28,7 +28,10 @@ import { Events } from '../../engine/core/events.js';
 import { makeDamage, dealDamage, DamageFlags, DamageType } from './damage.js';
 import { SpatialHash } from '../../engine/math/spatial-hash.js';
 
-/** Which side an attack belongs to. */
+/**
+ * Which side an attack belongs to.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const Team = Object.freeze({
   PLAYER: 'player',
   ENEMY: 'enemy',

@@ -20,7 +20,12 @@
 
 import { Events } from '../../engine/core/events.js';
 
-/** Broad damage categories, used for resistances and for audio/VFX selection. */
+/**
+ * Broad damage categories, used for resistances and for audio/VFX selection.
+ * Typed as a string map rather than left to infer literal types, so a value read
+ * from content data assigns without a cast.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const DamageType = Object.freeze({
   PHYSICAL: 'physical',
   INK: 'ink',           // the player's magic
@@ -30,7 +35,10 @@ export const DamageType = Object.freeze({
   ENVIRONMENT: 'environment', // spikes, crush, drowning
 });
 
-/** Flags that modify how a hit is processed. */
+/**
+ * Flags that modify how a hit is processed.
+ * @type {Readonly<Record<string, number>>}
+ */
 export const DamageFlags = Object.freeze({
   NONE: 0,
   /** Ignores invulnerability frames (damage-over-time, crush). */

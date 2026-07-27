@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AETHERWEIR — Room Editor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230b0d13'/%3E%3Cpath d='M3 12h10M3 8h7M3 4h10' stroke='%238fd0ff' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: ui-monospace, "DejaVu Sans Mono", monospace;
+    background: #0b0d13; color: #cfd6e6; height: 100vh;
+    display: grid; grid-template-columns: 210px 1fr 300px; grid-template-rows: 100vh;
+  }
+  aside { background: #11141c; border-right: 1px solid #232838; overflow-y: auto; padding: 10px; }
+  aside.right { border-right: none; border-left: 1px solid #232838; }
+  h2 { font-size: 11px; letter-spacing: .14em; color: #7f8ba3; margin: 14px 0 6px; text-transform: uppercase; }
+  h2:first-child { margin-top: 0; }
+  main { position: relative; overflow: auto; background: #070910; display: flex; align-items: center; justify-content: center; }
+  canvas { image-rendering: pixelated; cursor: crosshair; border: 1px solid #232838; }
+  .palette { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; }
+  .tile {
+    display: flex; align-items: center; gap: 5px; padding: 4px 5px;
+    background: #171b26; border: 1px solid transparent; border-radius: 2px;
+    cursor: pointer; font-size: 10px; user-select: none;
+  }
+  .tile:hover { background: #1e2331; }
+  .tile.active { border-color: #8fd0ff; background: #1c2636; }
+  .swatch { width: 12px; height: 12px; border: 1px solid #333a4a; flex: none; }
+  .glyph { color: #8fd0ff; width: 10px; text-align: center; font-weight: bold; }
+  label { display: block; font-size: 10px; color: #7f8ba3; margin: 6px 0 2px; }
+  input, select, textarea, button {
+    width: 100%; background: #171b26; color: #cfd6e6;
+    border: 1px solid #2a3140; border-radius: 2px; padding: 4px 6px;
+    font: inherit; font-size: 11px;
+  }
+  textarea { resize: vertical; min-height: 130px; white-space: pre; overflow-x: auto; }
+  button { cursor: pointer; margin-top: 6px; }
+  button:hover { background: #232a3a; }
+  button.primary { background: #21384c; border-color: #35617f; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .hint { font-size: 10px; color: #5d6779; line-height: 1.5; margin-top: 8px; }
+  #status { font-size: 10px; color: #7fd4a0; min-height: 14px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<aside>
+  <h2>Tiles</h2>
+  <div class="palette" id="palette"></div>
+  <h2>Tools</h2>
+  <div class="palette">
+    <div class="tile active" data-tool="paint"><span class="glyph">✎</span>Paint</div>
+    <div class="tile" data-tool="rect"><span class="glyph">▭</span>Rect</div>
+    <div class="tile" data-tool="fill"><span class="glyph">▣</span>Fill</div>
+    <div class="tile" data-tool="pick"><span class="glyph">⊙</span>Pick</div>
+  </div>
+  <div class="hint">
+    Left-click paints, right-click erases.<br>
+    Shift-drag draws a straight line.
+  </div>
+</aside>
+
+<main><canvas id="c"></canvas></main>
+
+<aside class="right">
+  <h2>Room</h2>
+  <label>id</label><input id="id" value="new_room_01">
+  <label>name</label><input id="name" value="An Unnamed Chamber">
+  <label>biome</label><select id="biome"></select>
+  <div class="row">
+    <div><label>width</label><input id="w" type="number" value="30" min="8" max="120"></div>
+    <div><label>height</label><input id="h" type="number" value="17" min="8" max="80"></div>
+  </div>
+  <div class="row">
+    <div><label>worldX</label><input id="wx" type="number" value="0"></div>
+    <div><label>worldY</label><input id="wy" type="number" value="0"></div>
+  </div>
+  <button id="resize">Resize (clears)</button>
+
+  <h2>Export</h2>
+  <button class="primary" id="export">Generate room definition</button>
+  <textarea id="out" spellcheck="false" placeholder="The room definition appears here, ready to paste into a content file."></textarea>
+  <button id="copy">Copy to clipboard</button>
+
+  <h2>Import</h2>
+  <textarea id="in" spellcheck="false" placeholder="Paste an art array here to load it."></textarea>
+  <button id="import">Load art</button>
+
+  <div id="status"></div>
+  <div class="hint">
+    The editor writes the same format the game reads, so anything you build here
+    can be pasted straight into <code>src/game/content/rooms/</code> and will
+    load without a build step.
+  </div>
+</aside>
+
+<script type="module">
+/**
+ * The room editor.
+ *
+ * It imports the *game's own* tile registry and palette code rather than
+ * duplicating them. That is the point: a tile added to the game appears in the
+ * editor automatically, and the editor can never disagree with the game about
+ * what a glyph means — a class of bug that plagues editors kept in sync by hand.
+ */
+import { TILE_DEFS, Tiles, TILE_SIZE, getTileDef, tileFromGlyph } from '../src/engine/physics/tiles.js';
+import { Tilemap } from '../src/engine/physics/tilemap.js';
+import { tilemapToArt } from '../src/game/world/room.js';
+import { allBiomes, getBiome } from '../src/game/content/biomes.js';
+import { MARKERS } from '../src/game/world/room.js';
+
+const SCALE = 3;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+
+let map = new Tilemap(30, 17, { outOfBoundsTile: Tiles.EMPTY });
+let current = Tiles.SOLID;
+let tool = 'paint';
+let painting = false;
+let eraseMode = false;
+let dragStart = null;
+let biome = allBiomes()[0];
+
+// Marker glyphs are painted like tiles but stored in a separate overlay, so
+// they never end up in the collision layer.
+const markerOverlay = new Map();
+const MARKER_LIST = Object.entries(MARKERS).map(([k, glyph]) => ({ key: k, glyph }));
+
+/**
+ * Tile glyphs include `<`, `>` and `&` (conveyors, and the ampersand is
+ * reserved for future use), so they must be escaped before going into innerHTML
+ * or the palette silently loses entries.
+ * @param {string} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+function status(msg) {
+  statusEl.textContent = msg;
+  setTimeout(() => { if (statusEl.textContent === msg) statusEl.textContent = ''; }, 2600);
+}
+
+// --- palette ---------------------------------------------------------------
+
+const paletteEl = document.getElementById('palette');
+for (const def of TILE_DEFS) {
+  if (!def) continue;
+  const el = document.createElement('div');
+  el.className = 'tile' + (def.id === current ? ' active' : '');
+  el.dataset.tile = String(def.id);
+  el.innerHTML = `<span class="swatch" style="background:${swatchColor(def)}"></span>`
+    + `<span class="glyph">${escapeHtml(def.glyph)}</span>${def.name}`;
+  el.onclick = () => {
+    current = def.id;
+    document.querySelectorAll('#palette .tile').forEach((n) => n.classList.remove('active'));
+    el.classList.add('active');
+  };
+  paletteEl.appendChild(el);
+}
+for (const m of MARKER_LIST) {
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.dataset.marker = m.glyph;
+  el.innerHTML = `<span class="swatch" style="background:#8fd0ff"></span>`
+    + `<span class="glyph">${escapeHtml(m.glyph)}</span>${m.key.toLowerCase()}`;
+  el.onclick = () => {
+    current = `marker:${m.glyph}`;
+    document.querySelectorAll('#palette .tile').forEach((n) => n.classList.remove('active'));
+    el.classList.add('active');
+  };
+  paletteEl.appendChild(el);
+}
+
+document.querySelectorAll('[data-tool]').forEach((el) => {
+  el.onclick = () => {
+    tool = el.dataset.tool;
+    document.querySelectorAll('[data-tool]').forEach((n) => n.classList.remove('active'));
+    el.classList.add('active');
+  };
+});
+
+const biomeSelect = document.getElementById('biome');
+for (const b of allBiomes()) {
+  const opt = document.createElement('option');
+  opt.value = b.id;
+  opt.textContent = b.name;
+  biomeSelect.appendChild(opt);
+}
+biomeSelect.onchange = () => { biome = getBiome(biomeSelect.value); draw(); };
+
+// --- drawing ---------------------------------------------------------------
+
+function swatchColor(def) {
+  if (def.id === Tiles.EMPTY) return '#0a0c12';
+  if (def.solid) return '#5c6478';
+  if (def.hazard) return '#c05050';
+  if (def.fluid) return '#2f6f9f';
+  if (def.oneWay) return '#8f8f6f';
+  if (def.climbable) return '#8f7f4f';
+  return '#3a4152';
+}
+
+function resize() {
+  canvas.width = map.width * TILE_SIZE * SCALE;
+  canvas.height = map.height * TILE_SIZE * SCALE;
+}
+
+function draw() {
+  resize();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = biome.palette.sky;
+  ctx.fillRect(0, 0, map.pixelWidth, map.pixelHeight);
+
+  for (let y = 0; y < map.height; y++) {
+    for (let x = 0; x < map.width; x++) {
+      const id = map.get(x, y);
+      const def = getTileDef(id);
+      const px = x * TILE_SIZE;
+      const py = y * TILE_SIZE;
+      if (id !== Tiles.EMPTY) {
+        ctx.fillStyle = tileColor(def);
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        if (def.solid) {
+          ctx.fillStyle = 'rgba(255,255,255,0.14)';
+          ctx.fillRect(px, py, TILE_SIZE, 2);
+        }
+      }
+      const marker = markerOverlay.get(`${x},${y}`);
+      if (marker) {
+        ctx.fillStyle = '#8fd0ff';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(marker, px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+      }
+    }
+  }
+
+  // Grid, with an emphasised line every 5 tiles for counting.
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1 / SCALE;
+  for (let x = 0; x <= map.width; x++) {
+    ctx.strokeStyle = x % 5 === 0 ? 'rgba(143,208,255,0.16)' : 'rgba(255,255,255,0.05)';
+    ctx.beginPath();
+    ctx.moveTo(x * TILE_SIZE, 0);
+    ctx.lineTo(x * TILE_SIZE, map.pixelHeight);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= map.height; y++) {
+    ctx.strokeStyle = y % 5 === 0 ? 'rgba(143,208,255,0.16)' : 'rgba(255,255,255,0.05)';
+    ctx.beginPath();
+    ctx.moveTo(0, y * TILE_SIZE);
+    ctx.lineTo(map.pixelWidth, y * TILE_SIZE);
+    ctx.stroke();
+  }
+
+  // The player's collider, drawn to scale, so platform gaps can be judged.
+  ctx.strokeStyle = 'rgba(120,255,180,0.5)';
+  ctx.strokeRect(2, map.pixelHeight - 22, 11, 20);
+}
+
+function tileColor(def) {
+  const p = biome.palette;
+  if (def.solid) return p.ramp[4];
+  if (def.hazard) return '#a04040';
+  if (def.fluid) return p.fluid;
+  if (def.oneWay) return p.ramp[7];
+  if (def.climbable) return p.ramp[6];
+  if (def.id === Tiles.BACKDROP) return p.ramp[1];
+  return p.ramp[2];
+}
+
+// --- interaction -----------------------------------------------------------
+
+function cellFromEvent(e) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: Math.floor(((e.clientX - r.left) / r.width) * map.width),
+    y: Math.floor(((e.clientY - r.top) / r.height) * map.height),
+  };
+}
+
+function apply(x, y, erase) {
+  if (!map.inBounds(x, y)) return;
+  const key = `${x},${y}`;
+  if (erase) {
+    map.set(x, y, Tiles.EMPTY);
+    markerOverlay.delete(key);
+    return;
+  }
+  if (typeof current === 'string' && current.startsWith('marker:')) {
+    markerOverlay.set(key, current.slice(7));
+    map.set(x, y, Tiles.EMPTY);
+  } else {
+    map.set(x, y, current);
+    markerOverlay.delete(key);
+  }
+}
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+canvas.addEventListener('pointerdown', (e) => {
+  const { x, y } = cellFromEvent(e);
+  eraseMode = e.button === 2;
+  if (tool === 'pick') {
+    current = map.get(x, y);
+    document.querySelectorAll('#palette .tile').forEach((n) => {
+      n.classList.toggle('active', n.dataset.tile === String(current));
+    });
+    return;
+  }
+  if (tool === 'rect') { dragStart = { x, y }; return; }
+  if (tool === 'fill') { floodFill(x, y, eraseMode ? Tiles.EMPTY : current); draw(); return; }
+  painting = true;
+  apply(x, y, eraseMode);
+  draw();
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!painting) return;
+  const { x, y } = cellFromEvent(e);
+  apply(x, y, eraseMode);
+  draw();
+});
+
+window.addEventListener('pointerup', (e) => {
+  if (tool === 'rect' && dragStart) {
+    const { x, y } = cellFromEvent(e);
+    const x0 = Math.min(dragStart.x, x);
+    const x1 = Math.max(dragStart.x, x);
+    const y0 = Math.min(dragStart.y, y);
+    const y1 = Math.max(dragStart.y, y);
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) apply(tx, ty, eraseMode);
+    }
+    dragStart = null;
+    draw();
+  }
+  painting = false;
+});
+
+function floodFill(sx, sy, target) {
+  const from = map.get(sx, sy);
+  if (from === target) return;
+  const stack = [[sx, sy]];
+  let guard = 0;
+  while (stack.length && guard++ < 200000) {
+    const [x, y] = stack.pop();
+    if (!map.inBounds(x, y) || map.get(x, y) !== from) continue;
+    map.set(x, y, target);
+    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+}
+
+// --- import / export -------------------------------------------------------
+
+document.getElementById('resize').onclick = () => {
+  const w = Math.max(8, Math.min(120, Number(document.getElementById('w').value) || 30));
+  const h = Math.max(8, Math.min(80, Number(document.getElementById('h').value) || 17));
+  map = new Tilemap(w, h, { outOfBoundsTile: Tiles.EMPTY });
+  markerOverlay.clear();
+  draw();
+  status(`Resized to ${w}x${h}`);
+};
+
+document.getElementById('export').onclick = () => {
+  const art = tilemapToArt(map);
+  // Stamp markers into the exported art, since that is how rooms store them.
+  for (const [key, glyph] of markerOverlay) {
+    const [x, y] = key.split(',').map(Number);
+    art[y] = art[y].slice(0, x) + glyph + art[y].slice(x + 1);
+  }
+
+  const usedMarkers = [...new Set([...markerOverlay.values()])];
+  const markerTable = usedMarkers.length
+    ? `\n    markers: {\n${usedMarkers.map((g) => `      ${JSON.stringify(g)}: 'TODO_${g}',`).join('\n')}\n    },`
+    : '';
+
+  document.getElementById('out').value =
+`{
+  id: ${JSON.stringify(document.getElementById('id').value)},
+  name: ${JSON.stringify(document.getElementById('name').value)},
+  biome: ${JSON.stringify(biomeSelect.value)},
+  worldX: ${Number(document.getElementById('wx').value) || 0},
+  worldY: ${Number(document.getElementById('wy').value) || 0},
+  art: [
+${art.map((r) => `    ${JSON.stringify(r)},`).join('\n')}
+  ],${markerTable}
+  exits: [
+    // { edge: 'right', offset: 12, span: 2, to: 'some_room' },
+  ],
+},`;
+  status(`Exported ${map.width}x${map.height}`);
+};
+
+document.getElementById('copy').onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(document.getElementById('out').value);
+    status('Copied.');
+  } catch {
+    status('Clipboard blocked — select and copy manually.');
+  }
+};
+
+document.getElementById('import').onclick = () => {
+  const text = document.getElementById('in').value;
+  const rows = [...text.matchAll(/['"]([^'"]*)['"]/g)].map((m) => m[1]).filter((r) => r.length > 2);
+  if (rows.length === 0) { status('No art rows found.'); return; }
+  const w = Math.max(...rows.map((r) => r.length));
+  map = new Tilemap(w, rows.length, { outOfBoundsTile: Tiles.EMPTY });
+  markerOverlay.clear();
+  const markerGlyphs = new Set(MARKER_LIST.map((m) => m.glyph));
+  rows.forEach((row, y) => {
+    for (let x = 0; x < w; x++) {
+      const g = row[x] ?? '.';
+      if (markerGlyphs.has(g)) {
+        markerOverlay.set(`${x},${y}`, g);
+        map.set(x, y, Tiles.EMPTY);
+      } else {
+        map.set(x, y, tileFromGlyph(g));
+      }
+    }
+  });
+  document.getElementById('w').value = String(w);
+  document.getElementById('h').value = String(rows.length);
+  draw();
+  status(`Loaded ${w}x${rows.length}`);
+};
+
+biome = getBiome(biomeSelect.value || allBiomes()[0].id);
+map.fillRect(0, 0, map.width, 1, Tiles.SOLID);
+map.fillRect(0, map.height - 3, map.width, 3, Tiles.SOLID);
+for (let y = 1; y < map.height - 3; y++) { map.set(0, y, Tiles.SOLID); map.set(map.width - 1, y, Tiles.SOLID); }
+draw();
+</script>
+</body>
+</html>

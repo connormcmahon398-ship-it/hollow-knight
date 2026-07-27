@@ -100,6 +100,7 @@ function define(def) {
 // Ids are stable and must never be renumbered: saved rooms and the level editor
 // reference them numerically.
 
+/** @type {Readonly<Record<string, number>>} */
 export const Tiles = Object.freeze({
   EMPTY: define({ id: 0, name: 'empty', glyph: '.', opaque: false }),
   SOLID: define({ id: 1, name: 'solid', glyph: '#', solid: true, slope: [1, 1] }),

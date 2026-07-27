@@ -25,7 +25,10 @@
 import { clamp } from '../math/math-utils.js';
 import { cosmeticRng } from '../core/rng.js';
 
-/** Rendering styles a particle can use. */
+/**
+ * Rendering styles a particle can use.
+ * @type {Readonly<Record<string, number>>}
+ */
 export const ParticleShape = Object.freeze({
   DOT: 0,
   SQUARE: 1,

@@ -22,6 +22,7 @@
  * Ability flags. The numeric values are part of the save format and must never
  * be reordered.
  */
+/** @type {Readonly<Record<string, number>>} */
 export const Ability = Object.freeze({
   NONE: 0,
   /** Horizontal burst. Crosses wide gaps and cancels momentum. */

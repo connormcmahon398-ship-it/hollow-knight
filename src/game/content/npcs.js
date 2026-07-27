@@ -68,7 +68,7 @@ export function selectNode(def, ctx) {
   return best;
 }
 
-/** @param {any} ctx @param {string} flag @returns {boolean} */
+/** @param {any} ctx @param {string} f @returns {boolean} */
 const flag = (ctx, f) => ctx?.world?.hasFlag?.(f) === true;
 
 // ===========================================================================

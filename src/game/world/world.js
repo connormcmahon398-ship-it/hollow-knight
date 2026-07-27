@@ -34,6 +34,7 @@ import { Events } from '../../engine/core/events.js';
 import { getBiome } from '../content/biomes.js';
 import { AABB } from '../../engine/math/aabb.js';
 import { TILE_SIZE, Tiles } from '../../engine/physics/tiles.js';
+import { parseAbilityMask } from '../player/abilities.js';
 
 export class World {
   /**
@@ -150,7 +151,10 @@ export class World {
 
     const player = this.ctx.player;
     if (player) {
-      const point = spawnPoint ?? room.playerSpawn ?? { x: room.bounds.centerX, y: room.bounds.centerY };
+      /** @type {{x: number, y: number, facing?: number}} */
+      const point = spawnPoint
+        ?? room.playerSpawn
+        ?? { x: room.bounds.centerX, y: room.bounds.centerY };
       player.spawnAt(point.x, point.y, point.facing ?? player.facing);
       // Brief invulnerability so arriving in a room next to an enemy is not an
       // instant hit the player had no chance to avoid.
@@ -429,7 +433,8 @@ export class World {
       const bounds = room.exitBounds(exit);
       if (!bounds.intersects(player.body.box)) continue;
       if (exit.requiresFlag && !this.hasFlag(exit.requiresFlag)) continue;
-      if (exit.gate && !player.abilities.hasAll(exit.gate)) continue;
+      const gate = typeof exit.gate === 'string' ? parseAbilityMask(exit.gate) : (exit.gate ?? 0);
+      if (gate && !player.abilities.hasAll(gate)) continue;
       if (!ROOM_DEFS.has(exit.to)) {
         console.warn(`World: exit from "${room.id}" leads to unknown room "${exit.to}"`);
         continue;

@@ -40,7 +40,10 @@ import { clamp, moveToward } from '../../engine/math/math-utils.js';
 import { queryHazard, hasGroundBelow } from '../../engine/physics/tilemap-collider.js';
 import { ATTACK_SPECS, AttackDirection } from './attacks.js';
 
-/** Named states, so transitions are typo-proof. */
+/**
+ * Named states, so transitions are typo-proof.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const PlayerState = Object.freeze({
   IDLE: 'idle',
   RUN: 'run',
@@ -105,6 +108,21 @@ export class Player {
     this.focusSpeedScale = 1;
     /** Extra filaments healed per focus. */
     this.focusPotency = 1;
+    // Flags and multipliers written by etchings and seals. Declared up front so
+    // they are part of the player's shape rather than appearing at runtime.
+    this.dashCooldownScale = 1;
+    this.reachScale = 1;
+    this.glyphScale = 1;
+    this.speedScale = 1;
+    this.focusCostScale = 1;
+    this.scriptCostScale = 1;
+    this.scriptDamageScale = 1;
+    this.stealthScale = 1;
+    this.cameraZoom = 1;
+    this.lightRadius = 96;
+    this.readsDeeply = false;
+    this.desperationDamage = false;
+    this.noKnockback = false;
 
     // --- facing / orientation ---
     /** -1 left, 1 right. */

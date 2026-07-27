@@ -104,7 +104,7 @@ for (const def of rooms) {
     createRoom(def.id);
     parsed++;
   } catch (err) {
-    problems.push(`room "${def.id}" fails to parse: ${err.message}`);
+    problems.push(`room "${def.id}" fails to parse: ${err instanceof Error ? err.message : String(err)}`);
   }
   for (const exit of def.exits ?? []) {
     if (!ROOM_DEFS.has(exit.to)) {

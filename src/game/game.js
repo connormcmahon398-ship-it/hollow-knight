@@ -55,7 +55,10 @@ import { clamp } from '../engine/math/math-utils.js';
 import { wrapText } from './npc/dialogue.js';
 import { withAlpha as withAlphaLocal } from '../engine/render/palette.js';
 
-/** Top-level modes. Menus are modes, not overlays, so input never leaks. */
+/**
+ * Top-level modes. Menus are modes, not overlays, so input never leaks.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const GameMode = Object.freeze({
   TITLE: 'title',
   PLAYING: 'playing',

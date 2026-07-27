@@ -31,7 +31,10 @@ import { Events } from '../../engine/core/events.js';
 import { clamp, moveToward } from '../../engine/math/math-utils.js';
 import { hasGroundBelow, isPositionFree } from '../../engine/physics/tilemap-collider.js';
 
-/** States shared by every archetype. Archetypes add their own on top. */
+/**
+ * States shared by every archetype. Archetypes add their own on top.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const EnemyState = Object.freeze({
   SPAWN: 'spawn',
   IDLE: 'idle',
@@ -153,6 +156,11 @@ export class Enemy {
     this.dormant = false;
     /** Room-unique index, used so saved kills persist. */
     this.spawnKey = '';
+    /**
+     * Discriminator set by {@link import('../boss/boss.js').Boss}. Declared here
+     * so every consumer can branch on it without a type guard.
+     */
+    this.isBoss = false;
 
     this.machine = new StateMachine({ debugName: `Enemy:${def.id}` });
     /** @type {(() => void)[]} */
@@ -351,7 +359,7 @@ export class Enemy {
     );
   }
 
-  /** @private */
+  /** Called once when the entity dies. Subclasses extend this. @protected */
   _onDeath() {
     const player = this.ctx.player;
     if (player) {

@@ -271,9 +271,10 @@ export class SaveSystem {
     // Base64 keeps it on one line and discourages casual editing without
     // pretending to be security, which it is not.
     const json = JSON.stringify(data);
-    return typeof btoa !== 'undefined'
-      ? btoa(unescape(encodeURIComponent(json)))
-      : Buffer.from(json, 'utf8').toString('base64');
+    // `btoa` in the browser, Node's Buffer in tests. Reached through
+    // `globalThis` because Buffer is not part of the DOM type library.
+    if (typeof btoa !== 'undefined') return btoa(unescape(encodeURIComponent(json)));
+    return /** @type {any} */ (globalThis).Buffer.from(json, 'utf8').toString('base64');
   }
 
   /**
@@ -285,7 +286,7 @@ export class SaveSystem {
     try {
       const json = typeof atob !== 'undefined'
         ? decodeURIComponent(escape(atob(code)))
-        : Buffer.from(code, 'base64').toString('utf8');
+        : /** @type {any} */ (globalThis).Buffer.from(code, 'base64').toString('utf8');
       const data = JSON.parse(json);
       const migrated = this.migrate(data);
       if (!migrated || !this.validate(migrated)) {

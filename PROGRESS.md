@@ -72,3 +72,35 @@ Run `npm run validate` for live numbers. Targets:
    marginally unjumpable.
 
 **Next step:** enemy framework, boss framework, world/room system.
+
+### Session 2 — Content, world and verification
+- Enemy chassis + 16 AI archetypes; 83 creatures.
+- Boss phase machine + pattern scheduler with a load-time fairness contract;
+  35 bosses, 85 phases, 253 pattern instances.
+- World: ASCII room format, world manager with momentum-preserving transitions,
+  three-tier persistence, arena sealing, off-screen culling.
+- 24 hand-authored room templates + seeded world builder -> 308 rooms.
+- Rendering: tile painter (cached per room), procedural actor painter,
+  parallax, particle effect table, prop painter.
+- Audio: Web Audio synthesiser, 30+ SFX, 17 adaptive procedural tracks.
+- Systems: save with migrations, HUD, map screen, dialogue, quests, progression.
+- Tools: dev server, level editor, content validator, Playwright smoke test.
+- Docs: README, ARCHITECTURE, DESIGN.
+
+**Bugs found and fixed in this session:**
+7. `StateMachine.force` did not resolve a pending transition, so a state's
+   `enter` requesting a change was silently deferred a frame.
+8. Room doorways were authored at a row the player could not reach, and the
+   world builder never carved doorways into the sealed templates at all.
+9. **The world was unwinnable.** Skim gated the door to the boss who granted
+   Skim, and three region gates required abilities found only inside the region
+   they gated. Found by the reachability validator, not by playing.
+10. The level editor's palette silently rendered empty because `escapeHtml`
+    was referenced but never defined (conveyor glyphs are `<` and `>`).
+
+**Verification status:** 115 tests, 0 type errors, validator passes with the
+world 100% reachable, smoke test boots and runs the real game at 60fps.
+
+**Next step:** see "Known limits" in `docs/ARCHITECTURE.md` §13. The highest
+value items are implementing the Linecast grapple swing, authoring the final
+choice sequence at the Last Weir, and playtesting combat balance.

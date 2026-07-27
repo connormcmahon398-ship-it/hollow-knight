@@ -30,7 +30,10 @@
  * two steps is never silently lost.
  */
 
-/** Canonical game actions. */
+/**
+ * Canonical game actions.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const Action = Object.freeze({
   LEFT: 'left',
   RIGHT: 'right',

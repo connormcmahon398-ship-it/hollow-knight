@@ -24,7 +24,10 @@
  * approached from below. It trades 15% damage for that coverage.
  */
 
-/** The four directions an attack can be aimed. */
+/**
+ * The directions an attack can be aimed.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const AttackDirection = Object.freeze({
   FORWARD: 'forward',
   UP: 'up',

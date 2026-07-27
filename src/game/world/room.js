@@ -33,7 +33,10 @@ import { Tiles, tileFromGlyph, TILE_SIZE, getTileDef } from '../../engine/physic
 import { AABB } from '../../engine/math/aabb.js';
 import { parseAbilityMask } from '../player/abilities.js';
 
-/** Glyphs that mark an entity rather than a tile. */
+/**
+ * Glyphs that mark an entity rather than a tile.
+ * @type {Readonly<Record<string, string>>}
+ */
 export const MARKERS = Object.freeze({
   PLAYER_SPAWN: '@',
   ENEMY: 'e',
@@ -58,7 +61,7 @@ const MARKER_SET = new Set(Object.values(MARKERS));
  * @property {number} offset Tile offset along that edge.
  * @property {number} span How many tiles wide/tall the doorway is.
  * @property {string} to Destination room id.
- * @property {number} [gate] Ability mask required to pass.
+ * @property {number|string} [gate] Ability mask, or an ability-name string like 'skim|paperwing'.
  * @property {string} [requiresFlag] World flag that must be set.
  */
 
@@ -78,9 +81,9 @@ const MARKER_SET = new Set(Object.values(MARKERS));
  * @property {string} biome
  * @property {string[]} art Rows of the tile layer.
  * @property {RoomExit[]} [exits]
- * @property {Record<string, string|{id: string, data?: any}>} [markers]
+ * @property {Record<string, string|{id: string, data?: any}|Array<string|{id: string, data?: any}>>} [markers]
  *   Maps a marker glyph occurrence index or a named key to what it spawns.
- * @property {number} [gate] Ability mask required to enter at all.
+ * @property {number|string} [gate] Ability mask, or an ability-name string.
  * @property {boolean} [isBossArena]
  * @property {boolean} [isSafe] No enemies; used for hubs and rest rooms.
  * @property {boolean} [secret] Not shown on the map until entered.

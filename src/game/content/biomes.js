@@ -51,7 +51,7 @@ import { Tiles } from '../../engine/physics/tiles.js';
 export const BIOMES = new Map();
 
 /**
- * @param {Omit<BiomeDef, 'palette'> & {palette: import('../../engine/render/palette.js').PaletteSpec}} def
+ * @param {Omit<BiomeDef, 'palette'> & {palette: Omit<import('../../engine/render/palette.js').PaletteSpec, 'id'|'name'>}} def
  * @returns {BiomeDef}
  */
 function defineBiome(def) {

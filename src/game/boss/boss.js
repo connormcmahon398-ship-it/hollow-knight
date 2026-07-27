@@ -379,7 +379,7 @@ export class Boss extends Enemy {
     }
   }
 
-  /** @override @private */
+  /** @override @protected */
   _onDeath() {
     this.defeated = true;
     this.encounterActive = false;

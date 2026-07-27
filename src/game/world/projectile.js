@@ -51,6 +51,13 @@ export class Projectile {
     this.trail = [];
     return this;
   }
+
+  /** Release any retained references. Projectiles hold none, so this is a no-op
+   *  that exists so the world can tear down every entity uniformly. */
+  dispose() {
+    this.owner = null;
+    this.trail.length = 0;
+  }
 }
 
 /**

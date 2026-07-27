@@ -36,12 +36,11 @@
  * @property {import('./world/room.js').Room} [room] Current room; null before load.
  * @property {import('../engine/physics/tilemap.js').Tilemap} [map] Current room's collision map.
  * @property {import('./world/world.js').World} [world]
- * @property {import('./quest/flags.js').FlagStore} [flags]
  * @property {import('./progression/progression.js').Progression} [progression]
- * @property {import('./quest/quest-system.js').QuestSystem} [quests]
+ * @property {import('./content/quests.js').QuestSystem} [quests]
  * @property {import('./npc/dialogue.js').DialogueSystem} [dialogue]
  * @property {import('./map/map-system.js').MapSystem} [mapSystem]
- * @property {import('./save/game-save.js').SaveSystem} [saves]
+ * @property {import('../engine/save/save-system.js').SaveSystem} [saves]
  * @property {number} elapsed Total simulation seconds since the run started.
  * @property {boolean} paused
  * @property {boolean} debug

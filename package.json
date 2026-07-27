@@ -16,6 +16,7 @@
     "smoke": "node tools/smoke.mjs"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "playwright": "^1.62.0"
   },
   "license": "MIT"

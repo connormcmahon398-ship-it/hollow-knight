@@ -22,7 +22,10 @@
 import { AABB } from '../math/aabb.js';
 import { Vec2 } from '../math/vec2.js';
 
-/** Collision response categories, used for filtering. */
+/**
+ * Collision response categories, used for filtering.
+ * @type {Readonly<Record<string, number>>}
+ */
 export const CollisionLayer = Object.freeze({
   NONE: 0,
   PLAYER: 1 << 0,
