@@ -1,0 +1,292 @@
+<title>AETHERWEIR</title>
+<style>
+  /* Single-theme by intent: the canvas renders a dark, lit world, and a light
+     frame around it would read as a rendering fault rather than a preference. */
+  :root {
+    --ground: #08090e;
+    --plate:  #0f1118;
+    --salt:   #e8dcc0;
+    --brass:  #c9a86a;
+    --aether: #8fd0ff;
+    --stone:  #5c6478;
+
+    --display: ui-serif, Georgia, "Times New Roman", serif;
+    --ledger: ui-monospace, "DejaVu Sans Mono", "Courier New", monospace;
+
+    color-scheme: dark;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--salt);
+    font-family: var(--ledger);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Arrow keys and space are gameplay inputs, not scroll commands. */
+    overscroll-behavior: none;
+  }
+
+  /* ---- the frame ---- */
+
+  .frame {
+    flex: 1;
+    position: relative;
+    margin: 10px 10px 0;
+    border: 1px solid color-mix(in oklab, var(--brass) 34%, transparent);
+    background: #000;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    touch-action: none;
+  }
+
+  /* ---- frontispiece ---- */
+
+  .plate {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 26px;
+    padding: 32px;
+    text-align: center;
+    background:
+      radial-gradient(ellipse at 50% 42%, #12141d 0%, var(--ground) 68%, #000 100%);
+    z-index: 2;
+    transition: opacity .5s ease, visibility .5s;
+  }
+  .plate[hidden-state] { opacity: 0; visibility: hidden; pointer-events: none; }
+
+  .plate h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(30px, 7.5vw, 62px);
+    letter-spacing: .3em;
+    /* The tracking pushes the word right; pull it back so it reads centred. */
+    text-indent: .3em;
+    color: var(--salt);
+    text-wrap: balance;
+    line-height: 1;
+  }
+
+  .rule {
+    width: min(320px, 62vw);
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent, color-mix(in oklab, var(--brass) 60%, transparent), transparent);
+  }
+
+  .plate .epigraph {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: clamp(12px, 2.1vw, 15px);
+    line-height: 1.75;
+    color: color-mix(in oklab, var(--salt) 62%, transparent);
+    max-width: 46ch;
+    text-wrap: balance;
+  }
+
+  .attribution {
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  .begin {
+    font-family: var(--ledger);
+    font-size: 12px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ground);
+    background: var(--salt);
+    border: 0;
+    padding: 13px 30px;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .begin:hover { background: #fff; transform: translateY(-1px); }
+  .begin:focus-visible {
+    outline: 2px solid var(--aether);
+    outline-offset: 3px;
+  }
+  .begin:active { transform: translateY(0); }
+
+  .note {
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--stone);
+    max-width: 44ch;
+    line-height: 1.7;
+  }
+
+  /* ---- the ledger of controls ---- */
+
+  .ledger {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px 16px;
+    padding: 9px 12px 11px;
+    font-size: 10px;
+    color: var(--stone);
+  }
+
+  .ledger span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+
+  kbd {
+    font-family: var(--ledger);
+    font-size: 10px;
+    line-height: 1;
+    padding: 3px 5px;
+    color: var(--brass);
+    border: 1px solid color-mix(in oklab, var(--brass) 32%, transparent);
+    background: var(--plate);
+    border-radius: 2px;
+  }
+
+  .ledger em {
+    font-style: normal;
+    color: color-mix(in oklab, var(--salt) 50%, transparent);
+  }
+
+  /* ---- failure ---- */
+
+  .fault {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    text-align: center;
+    background: var(--ground);
+    z-index: 3;
+  }
+  .fault[data-shown] { display: flex; }
+  .fault strong {
+    font-family: var(--display);
+    font-weight: 400;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    font-size: 14px;
+    color: #ff9a9a;
+  }
+  .fault code {
+    font-size: 11px;
+    color: var(--stone);
+    max-width: 60ch;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+
+<div class="frame" id="frame">
+  <canvas id="stage" aria-label="AETHERWEIR game view"></canvas>
+
+  <div class="plate" id="plate">
+    <h1>AETHERWEIR</h1>
+    <div class="rule"></div>
+    <p class="epigraph">
+      A sky-continent fell into a salt basin, and what is left of it is held back
+      by dams nobody expects to hold. You are a Quill, woken to record the
+      testimony before the water arrives.
+    </p>
+    <button class="begin" id="begin" type="button">Begin the record</button>
+    <p class="note">
+      Keyboard, or a gamepad if one is connected. Sound starts on your first input.
+    </p>
+    <p class="attribution">An original game &middot; no sprites, no audio files</p>
+  </div>
+
+  <div class="fault" id="fault">
+    <strong>The record will not open</strong>
+    <code id="faultText"></code>
+  </div>
+</div>
+
+<div class="ledger">
+  <span><kbd>&larr;</kbd><kbd>&rarr;</kbd><em>move</em></span>
+  <span><kbd>Z</kbd><em>jump &mdash; hold for height</em></span>
+  <span><kbd>X</kbd><em>strike &mdash; hold a direction to aim</em></span>
+  <span><kbd>C</kbd><em>dash</em></span>
+  <span><kbd>F</kbd><em>focus &mdash; hold to heal</em></span>
+  <span><kbd>E</kbd><em>interact</em></span>
+  <span><kbd>M</kbd><em>map</em></span>
+  <span><kbd>Esc</kbd><em>pause</em></span>
+</div>
+
+<script>
+/*__BUNDLE__*/
+</script>
+
+<script>
+(function () {
+  var canvas = document.getElementById('stage');
+  var plate  = document.getElementById('plate');
+  var begin  = document.getElementById('begin');
+  var fault  = document.getElementById('fault');
+  var game;
+
+  function fail(err) {
+    document.getElementById('faultText').textContent =
+      (err && err.message) ? err.message : String(err);
+    fault.setAttribute('data-shown', '');
+  }
+
+  try {
+    // Boot so the world loads and the first frame is composed, then hold the
+    // loop until the player asks for it. Starting immediately would run the
+    // opening region behind the title plate.
+    game = AW.boot(canvas);
+    game.loop.stop();
+    game.render(0, 0);
+  } catch (err) {
+    fail(err);
+  }
+
+  // Arrow keys and space scroll the page by default, which fights every jump.
+  window.addEventListener('keydown', function (e) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].indexOf(e.code) >= 0) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  begin.addEventListener('click', function () {
+    if (!game) return;
+    plate.setAttribute('hidden-state', '');
+    // The page runs in a frame; without this the keyboard goes to the parent
+    // document and nothing responds.
+    window.focus();
+    canvas.focus();
+    game.audio.unlock();
+    game.loop.start();
+  });
+
+  // Clicking anywhere in the frame re-takes focus, so a stray click on the
+  // parent page does not silently kill the controls.
+  document.getElementById('frame').addEventListener('pointerdown', function () {
+    window.focus();
+  });
+})();
+</script>

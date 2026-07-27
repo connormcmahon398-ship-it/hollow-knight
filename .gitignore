@@ -7,3 +7,6 @@ coverage/
 screenshots/
 node_modules/
 package-lock.json
+
+# Built artifact bundle
+dist/

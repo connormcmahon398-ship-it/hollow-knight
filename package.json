@@ -13,10 +13,12 @@
     "test:watch": "node --test --watch \"tests/*.test.js\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "validate": "node tools/validate-content.mjs",
-    "smoke": "node tools/smoke.mjs"
+    "smoke": "node tools/smoke.mjs",
+    "build:artifact": "node tools/build-artifact.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
+    "esbuild": "^0.28.1",
     "playwright": "^1.62.0"
   },
   "license": "MIT"
