@@ -97,7 +97,9 @@ export class MapSystem {
     const g = r.g;
     const p = r.palette;
 
-    g.fillStyle = 'rgba(6,8,12,0.92)';
+    // Fully opaque: the map is a mode, not an overlay, and the world showing
+    // faintly through it reads as a rendering fault rather than as depth.
+    g.fillStyle = '#060810';
     g.fillRect(0, 0, r.width, r.height);
 
     const cx = r.width / 2 + this.panX;
