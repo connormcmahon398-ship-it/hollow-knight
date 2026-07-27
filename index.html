@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AETHERWEIR</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0c12'/%3E%3Cpath d='M8 2 L11 13 L8 11 L5 13 Z' fill='%23e8dcc0'/%3E%3C/svg%3E">
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #05060a;
+    font-family: ui-monospace, "DejaVu Sans Mono", "Courier New", monospace;
+    color: #cfd6e6;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  canvas#game {
+    display: block; width: 100%; height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    touch-action: none;
+  }
+  #loading {
+    position: fixed; inset: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; background: #05060a; z-index: 10; text-align: center; padding: 24px;
+  }
+  #loading h1 {
+    font-size: clamp(20px, 5vw, 34px); letter-spacing: 0.34em;
+    font-weight: 400; color: #e8dcc0;
+  }
+  #loading p { font-size: 12px; color: #6f7a8e; letter-spacing: 0.08em; }
+  #loading.error { color: #ff8080; }
+  #help {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 6px 10px; font-size: 11px; color: #5a6478;
+    background: rgba(5,6,10,0.7); text-align: center;
+    pointer-events: none; letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+  <div id="stage"><canvas id="game"></canvas></div>
+  <div id="loading">
+    <h1>AETHERWEIR</h1>
+    <p>recording the last testimony of a fallen shelf</p>
+    <p style="opacity:.5">loading&hellip;</p>
+  </div>
+  <div id="help">
+    arrows / WASD move &nbsp;·&nbsp; Z jump &nbsp;·&nbsp; X strike &nbsp;·&nbsp; C dash &nbsp;·&nbsp; F focus &nbsp;·&nbsp; E interact &nbsp;·&nbsp; M map &nbsp;·&nbsp; ESC pause &nbsp;·&nbsp; ` debug
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

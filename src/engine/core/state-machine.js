@@ -112,6 +112,12 @@ export class StateMachine {
   force(name, params) {
     this._pending = null;
     this._doTransition(name, params);
+    // The forced state's `enter` may immediately request another change (a
+    // respawn landing straight into `fall`, for example). Resolving here means
+    // that request takes effect now rather than being silently deferred to the
+    // next update, which would leave the machine in a state nobody chose for a
+    // frame — and it is what makes a genuine transition cycle throw.
+    this.resolve();
   }
 
   /**

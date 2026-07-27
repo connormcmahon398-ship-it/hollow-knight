@@ -31,7 +31,7 @@ import {
 defineBoss({
   id: 'saltwarden', name: 'The Saltwarden', title: 'First Refusal',
   biome: 'saltshallows', health: 60, damage: 1, width: 26, height: 30,
-  glyphs: 60, rewardAbility: 'skim',
+  glyphs: 60, rewardAbility: 'mantle',
   visual: { form: 'warden', color: '#6f6a5c', accent: '#e8dcc0', eyes: 2, preferredRange: 60 },
   lore: 'It was set here to turn back the tide. The tide stopped coming. It kept turning things back.',
   phases: [
