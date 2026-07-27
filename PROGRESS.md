@@ -47,5 +47,28 @@ Run `npm run validate` for live numbers. Targets:
 - Chose vanilla ESM + Canvas2D + Web Audio (rationale in `docs/ARCHITECTURE.md` §1).
 - Established the original setting **AETHERWEIR** (`docs/DESIGN.md`).
 - Built engine core: loop, events, RNG, pooling, state machines, math, spatial hash.
+- Physics: tile registry (slope-as-height-function), tilemap, bodies, substepped
+  axis-separated resolver with slope climbing, ground snap, one-way, fluids, crush.
+- Render: OKLab palette system, camera (deadzone + look-ahead + spring + shake),
+  Canvas2D renderer with internal-resolution buffer, lighting and post-FX.
+- Input: action bindings, press buffering, gamepad, rebinding.
+- Combat: damage payloads, Health, hitbox/hurtbox, CombatSystem.
+- Player: full HFSM controller (idle/run/jump/fall/land/dash/wallslide/attack/
+  hurt/dead/focus/climb/swim/sit/locked), attack frame data, ability gating.
 
-**Next step:** physics world + tilemap collision.
+**Bugs found and fixed by tests (documented because they are instructive):**
+1. `sweepAABB` discarded pre-existing overlaps — the standard slab rejection
+   (`both entry times negative`) also fires when the boxes already intersect.
+2. Air-jump eligibility arithmetic was wrong, and the jump buffer was consumed
+   *before* eligibility was known, silently eating presses.
+3. `InputManager.axisX` only ever ratcheted upward, so without a gamepad the
+   character latched into permanent movement.
+4. Wall slide did not re-apply inward velocity, so contact was lost every other
+   step and the state oscillated with `fall`.
+5. Wall slide left gravity enabled; since the controller runs before physics
+   integration, the slide-speed clamp was overwritten by gravity every step.
+6. Jump velocity was tuned from the continuous ballistic apex, which overstates
+   the real apex by `v*dt/2` under semi-implicit Euler; four-tile gaps were
+   marginally unjumpable.
+
+**Next step:** enemy framework, boss framework, world/room system.
